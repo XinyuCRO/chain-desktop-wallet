@@ -59,8 +59,7 @@ import { generalConfigService } from '../../storage/GeneralConfigService';
 import { UserAsset, UserAssetConfig, UserAssetType } from '../../models/UserAsset';
 import AddressBook from './tabs/AddressBook/AddressBook';
 import { getChainName } from '../../utils/utils';
-
-const { ipcRenderer } = window.require('electron');
+import { isRunningInElectron } from '../../utils/env';
 
 const { Header, Content, Footer } = Layout;
 const { TabPane } = Tabs;
@@ -844,7 +843,10 @@ const FormSettings = () => {
     const deleteDBRequest = indexedDB.deleteDatabase('NeDB');
     deleteDBRequest.onsuccess = () => {
       setTimeout(() => {
-        ipcRenderer.send('restart_app');
+        if (isRunningInElectron()) {
+          const { ipcRenderer } = window.require('electron');
+          ipcRenderer.send('restart_app');
+        }
       }, 2000);
     };
   };

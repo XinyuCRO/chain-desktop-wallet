@@ -13,7 +13,7 @@ import RequestConfirmation from '../components/RequestConfirmation/RequestConfir
 import { UserAsset } from '../../../models/UserAsset';
 import { secretStoreService } from '../../../storage/SecretStoreService';
 import { Dapp, DappBrowserIPC } from '../types';
-import { ProviderPreloadScriptPath } from './config';
+import { getProviderPreloadScriptPath } from './config';
 import packageJson from '../../../../package.json';
 import { walletService } from '../../../service/WalletService';
 import { useRefCallback } from './useRefCallback';
@@ -354,7 +354,7 @@ const DappBrowser = forwardRef<DappBrowserRef, DappBrowserProps>((props: DappBro
         />
       )}
       <webview
-        preload={ProviderPreloadScriptPath}
+        preload={getProviderPreloadScriptPath()}
         ref={webviewRef}
         // useragent is required for some dapps to auto connect, eg. cronoschimps
         useragent={`Mozilla/5.0 (Linux; Android 8.0.0; Desktop Wallet Build/${packageJson.version}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.84 Mobile Safari/537.36`}

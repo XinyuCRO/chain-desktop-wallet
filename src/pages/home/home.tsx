@@ -40,8 +40,7 @@ import { AnalyticsService } from '../../service/analytics/AnalyticsService';
 import IconTick from '../../svg/IconTick';
 import nftThumbnail from '../../assets/nft-thumbnail.png';
 import RewardModalPopup from '../../components/RewardModalPopup/RewardModalPopup';
-
-const { ipcRenderer } = window.require('electron');
+import { isRunningInElectron } from '../../utils/env';
 
 const { Header, Content, Footer } = Layout;
 const { TabPane } = Tabs;
@@ -266,7 +265,7 @@ const HomePage = () => {
     setFetchingDB(false);
   };
 
-  function listenToNewVersionUpdates() {
+  function listenToNewVersionUpdates(ipcRenderer: any) {
     ipcRenderer.on('update_available', () => {
       ipcRenderer.removeAllListeners('update_available');
 
@@ -282,7 +281,7 @@ const HomePage = () => {
     });
   }
 
-  function listenToUpdatesDownloaded() {
+  function listenToUpdatesDownloaded(ipcRenderer: any) {
     ipcRenderer.on('update_downloaded', () => {
       ipcRenderer.removeAllListeners('update_downloaded');
 
@@ -357,8 +356,12 @@ const HomePage = () => {
     };
 
     syncAssetData();
-    listenToNewVersionUpdates();
-    listenToUpdatesDownloaded();
+
+    if (isRunningInElectron()) {
+      const { ipcRenderer } = window.require('electron');
+      listenToNewVersionUpdates(ipcRenderer);
+      listenToUpdatesDownloaded(ipcRenderer);
+    }
 
     if (!didMountRef.current) {
       didMountRef.current = true;

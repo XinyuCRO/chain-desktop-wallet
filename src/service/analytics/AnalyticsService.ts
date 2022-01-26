@@ -1,11 +1,19 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Session } from '../../models/Session';
+import { isRunningInElectron } from '../../utils/env';
 
-const electron = window.require('electron');
+let actionEvent = (..._: any[]) => {};
+let transactionEvent = (..._: any[]) => {};
+let pageView = (..._: any[]) => ({ send: () => {} });
 
-// Load all analytics functions from the main electron process
-const transactionEvent = electron.remote.getGlobal('transactionEvent');
-const actionEvent = electron.remote.getGlobal('actionEvent');
-const pageView = electron.remote.getGlobal('pageView');
+if (isRunningInElectron()) {
+  const electron = window.require('electron');
+
+  // Load all analytics functions from the main electron process
+  transactionEvent = electron.remote.getGlobal('transactionEvent');
+  actionEvent = electron.remote.getGlobal('actionEvent');
+  pageView = electron.remote.getGlobal('pageView');
+}
 
 export enum AnalyticsTxType {
   TransferTransaction = 'TransferTransaction',

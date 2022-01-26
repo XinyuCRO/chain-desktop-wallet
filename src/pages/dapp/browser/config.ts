@@ -1,6 +1,5 @@
 import path from 'path';
-
-const { remote } = window.require('electron');
+import { isRunningInElectron } from '../../../utils/env';
 
 export class ChainConfig {
   static ChainId = 0x19;
@@ -10,11 +9,18 @@ export class ChainConfig {
   static ExplorerAPIUrl = 'https://cronos.crypto.org/explorer/api';
 }
 
-export const ProviderPreloadScriptPath =
-  // Replace backslash on Windows to forwardslash
-  process.env.NODE_ENV === 'development'
-    ? `file://${path.join(
-        remote.app.getAppPath().replace(/\\/g, '/'),
-        'src/pages/dapp/browser/preload.js',
-      )}`
-    : `file://${path.join(remote.app.getAppPath().replace(/\\/g, '/'), '../scripts/preload.js')}`;
+export function getProviderPreloadScriptPath() {
+  if (isRunningInElectron()) {
+    const { remote } = window.require('electron');
+    // Replace backslash on Windows to forwardslash
+    return process.env.NODE_ENV === 'development'
+      ? `file://${path.join(
+          remote.app.getAppPath().replace(/\\/g, '/'),
+          'src/pages/dapp/browser/preload.js',
+        )}`
+      : `file://${path.join(remote.app.getAppPath().replace(/\\/g, '/'), '../scripts/preload.js')}`;
+  }
+
+  // the path is not necessary when running in other environments
+  return '';
+}
