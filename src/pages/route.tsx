@@ -1,13 +1,6 @@
-import React, { useRef, useLayoutEffect, useState } from 'react';
-import {
-  BrowserRouter,
-  HashRouter as ElectronRouter,
-  Switch,
-  Route,
-  Redirect,
-} from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { HashRouter, Switch, Route, Redirect } from 'react-router-dom';
 import axios from 'axios';
-import { isElectron } from '../utils/utils';
 
 import WelcomePage from './welcome/welcome';
 import RestorePage from './restore/restore';
@@ -31,21 +24,7 @@ import {
   CLOUDFLARE_TRACE_URI,
   NOT_KNOWN_YET_VALUE,
   COUNTRY_CODES_TO_BLOCK,
-  GEO_BLOCK_TIMEOUT,
 } from '../config/StaticConfig';
-
-interface RouterProps {
-  children: React.ReactNode;
-}
-
-// Electron build: <HashRouter>, Web build: <BrowserRouter>
-const Router: React.FC<RouterProps> = props => {
-  return isElectron() ? (
-    <ElectronRouter>{props.children}</ElectronRouter>
-  ) : (
-    <BrowserRouter>{props.children}</BrowserRouter>
-  );
-};
 
 const getCurrentGeoLocationCountryCode = async () => {
   const geoLocationPlainText = await axios.get(CLOUDFLARE_TRACE_URI);
@@ -65,22 +44,13 @@ const getCurrentGeoLocationCountryCode = async () => {
 };
 
 function RouteHub() {
-  const [isCountryBlocked, setIsCountryBlocked] = useState(true);
-  const [isBlockSloganVisible, setIsBlockSloganVisible] = useState(false);
-  const didMountRef = useRef(false);
+  const [isCountryBlocked, setIsCountryBlocked] = useState(false);
 
   const routeIndex = {
     name: 'Welcome Page',
     key: 'welcome',
     path: '/',
     component: <WelcomePage />,
-  };
-
-  const blockPageRoute = {
-    name: 'Block Page',
-    key: 'block',
-    path: '/block',
-    component: <BlockPage />,
   };
 
   const routeItems = [
@@ -185,34 +155,27 @@ function RouteHub() {
     },
   ];
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const checkIsCountryBlocked = async () => {
+      if (process.env.NODE_ENV === 'development') {
+        return;
+      }
+
       const currentCountryCode = await getCurrentGeoLocationCountryCode();
 
       // Todo: Fetch country codes dynamically
-      setTimeout(() => {
-        if (!COUNTRY_CODES_TO_BLOCK.includes(currentCountryCode)) {
-          setIsCountryBlocked(false);
-        }
-        setIsBlockSloganVisible(true);
-      }, GEO_BLOCK_TIMEOUT);
+      if (COUNTRY_CODES_TO_BLOCK.includes(currentCountryCode)) {
+        setIsCountryBlocked(true);
+      }
     };
 
-    if (!didMountRef.current) {
-      checkIsCountryBlocked();
-      didMountRef.current = true;
-    }
-  }, [isCountryBlocked, setIsCountryBlocked]);
+    checkIsCountryBlocked();
+  }, []);
 
   return isCountryBlocked ? (
-    <Router>
-      {React.cloneElement(blockPageRoute.component, {
-        isCountryBlocked,
-        isBlockSloganVisible,
-      })}
-    </Router>
+    <BlockPage />
   ) : (
-    <Router>
+    <HashRouter>
       <Switch>
         <Route exact path={routeIndex.path} key={routeIndex.key}>
           {routeIndex.component}
@@ -239,7 +202,7 @@ function RouteHub() {
           </Switch>
         </HomeLayout>
       </Switch>
-    </Router>
+    </HashRouter>
   );
 }
 
